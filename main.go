@@ -3,7 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"os"
+	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 func main() {
@@ -21,8 +26,25 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		_, _ = fmt.Println(string(html))
+		html_str := string(html)
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader(html_str))
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		image_url := doc.Find("meta[property='og:image']").AttrOr("content", "")
+		fmt.Println(image_url)
+		download, err := http.Get(image_url)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer download.Body.Close()
+		file, _ := os.Create("image.jpg")
+		defer file.Close()
+		_, _ = io.Copy(file, download.Body)
+		return
 	}
+	// TODO: Properly handle error
+	// TODO: Do it in a loop between image ids
+	// ToDO: Create Folder before Saving
 }
-
-// TODO: Now that we fetched the html, we need to identify main booru image and download it somehow
