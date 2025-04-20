@@ -43,8 +43,13 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer file.Close()
+
 		DownloadedImage, err := io.Copy(file, download.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = file.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
