@@ -38,7 +38,10 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer download.Body.Close()
+		err = download.Body.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
 		file, err := os.Create("image.jpg")
 		if err != nil {
 			log.Fatal(err)
