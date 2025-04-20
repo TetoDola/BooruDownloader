@@ -39,9 +39,16 @@ func main() {
 			log.Fatal(err)
 		}
 		defer download.Body.Close()
-		file, _ := os.Create("image.jpg")
+		file, err := os.Create("image.jpg")
+		if err != nil {
+			log.Fatal(err)
+		}
 		defer file.Close()
-		_, _ = io.Copy(file, download.Body)
+		DownloadedImage, err := io.Copy(file, download.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(download, DownloadedImage)
 		return
 	}
 	// TODO: Properly handle error
