@@ -16,12 +16,16 @@ func check_error(err error) {
 		log.Fatal(err)
 	}
 }
+
 func main() {
+	// Fetch HTML
 	url := "https://safebooru.org/index.php?page=post&s=view&id=5708103"
 	response, err := http.Get(url)
 	check_error(err)
 	_, _ = fmt.Println(response) // the underscore is a way to say ik it returns something and something but i will ignore it
 	defer response.Body.Close()
+
+	// Parse HTML
 	html, err := io.ReadAll(response.Body)
 	check_error(err)
 	html_str := string(html)
@@ -29,6 +33,8 @@ func main() {
 	check_error(err)
 	image_url := doc.Find("meta[property='og:image']").AttrOr("content", "")
 	fmt.Println(image_url)
+
+	// Fetch Img + Download
 	download, err := http.Get(image_url)
 	check_error(err)
 	file, err := os.Create("image.jpg")
