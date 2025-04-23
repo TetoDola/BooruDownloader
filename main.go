@@ -65,7 +65,6 @@ func main() {
 		}
 
 		html, err := io.ReadAll(response.Body)
-		fmt.Println(string(html))
 		response.Body.Close()
 		if check_error(err) {
 			continue
