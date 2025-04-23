@@ -71,5 +71,3 @@ func main() {
 }
 
 // TODO: Properly handle error
-// TODO: Do it in a loop between image ids
-// ToDO: Create Folder before Saving
