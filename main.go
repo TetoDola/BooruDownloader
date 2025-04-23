@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"io"
@@ -10,44 +11,63 @@ import (
 	"strings"
 )
 
-func check_error(err error) {
+func check_error(err error) bool {
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return true
+	}
+	return false
+}
+
+func make_dir() {
+	path := "C:\\Users\\Teto\\Documents\\Safebooru\\images\\"
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		fmt.Println("Creating directory:", path)
+		err := os.MkdirAll(path, os.ModePerm)
+		if err != nil {
+			log.Println("Failed to create directory:", err)
+		}
 	}
 }
 
-func download_image(url string) {
+func download_image(url string, id int) {
 	download, err := http.Get(url)
-	check_error(err)
-	file, err := os.Create("image.jpg")
-	check_error(err)
-	DownloadedImage, err := io.Copy(file, download.Body)
-	check_error(err)
-	err = file.Close()
-	check_error(err)
-	fmt.Println(download, DownloadedImage)
-	err = download.Body.Close()
-	check_error(err)
+	if check_error(err) != true {
+		file, err := os.Create(fmt.Sprintf("C:\\Users\\Teto\\Documents\\Safebooru\\images\\%v.jpg", id))
+		check_error(err)
+		_, err = io.Copy(file, download.Body)
+		check_error(err)
+		err = file.Close()
+		check_error(err)
+		err = download.Body.Close()
+		check_error(err)
+		fmt.Printf("Downloaded Image: %v \n", id)
+	}
+
 }
 
-func parse_html(html string) {
+func parse_html(html string, id int) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 	check_error(err)
 	image_url := doc.Find("meta[property='og:image']").AttrOr("content", "")
-	fmt.Println(image_url)
-	download_image(image_url)
+	download_image(image_url, id)
 }
 func main() {
 	// Fetch HTML
-	url := "https://safebooru.org/index.php?page=post&s=view&id=5708103"
-	response, err := http.Get(url)
-	check_error(err)
-	_, _ = fmt.Println(response) // the underscore is a way to say ik it returns something and something but i will ignore it
-	html, err := io.ReadAll(response.Body)
-	check_error(err)
-	parse_html(string(html))
-	defer response.Body.Close()
-
+	make_dir()
+	for i := 0; i < 1000; i++ {
+		url := fmt.Sprintf("https://safebooru.org/index.php?page=post&s=view&id=%v", i)
+		response, err := http.Get(url)
+		if check_error(err) {
+			continue
+		}
+		html, err := io.ReadAll(response.Body)
+		response.Body.Close()
+		if check_error(err) {
+			continue
+		}
+		parse_html(string(html), i)
+	}
 }
 
 // TODO: Properly handle error
