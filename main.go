@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 func check_error(err error) bool {
@@ -19,6 +20,7 @@ func check_error(err error) bool {
 	return false
 }
 
+// PS Copy pasted from a random website, no clue how this function actually works
 func make_dir() {
 	path := "C:\\Users\\Teto\\Documents\\Safebooru\\images\\"
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
@@ -69,6 +71,7 @@ func main() {
 			continue
 		}
 		parse_html(string(html), i)
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 
