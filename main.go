@@ -55,13 +55,15 @@ func parse_html(html string, id int) {
 func main() {
 	// Fetch HTML
 	make_dir()
-	for i := 0; i < 1000; i++ {
+	for i := 1; i < 1001; i++ {
 		url := fmt.Sprintf("https://safebooru.org/index.php?page=post&s=view&id=%v", i)
 		response, err := http.Get(url)
 		if check_error(err) {
 			continue
 		}
+
 		html, err := io.ReadAll(response.Body)
+		fmt.Println(string(html))
 		response.Body.Close()
 		if check_error(err) {
 			continue
