@@ -94,11 +94,15 @@ func main() {
 		}
 
 		html, err := io.ReadAll(response.Body)
-		_ = response.Body.Close()
 		if err != nil {
 			log.Println(err)
 			continue
 		}
+		err = response.Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+
 		parse_html(string(html), i)
 		time.Sleep(1000 * time.Millisecond)
 	}
