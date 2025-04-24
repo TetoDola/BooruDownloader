@@ -12,9 +12,9 @@ import (
 	"time"
 )
 
-func check_error(err error) bool {
+func check_error(err error, line string) bool {
 	if err != nil {
-		log.Println(err)
+		log.Println(fmt.Sprintf("Error in \"%v\": %v", line, err))
 		return true
 	}
 	return false
@@ -34,15 +34,15 @@ func make_dir() {
 
 func download_image(url string, id int) {
 	download, err := http.Get(url)
-	if check_error(err) != true {
+	if check_error(err, "download, err := http.Get(url)") != true {
 		file, err := os.Create(fmt.Sprintf("C:\\Users\\Teto\\Documents\\Safebooru\\images\\%v.jpg", id))
-		check_error(err)
+		check_error(err, "file, err := os.Create(fmt.Sprintf(\"C:\\Users\\Teto\\Documents\\Safebooru\\images\\%v.jpg\", id))")
 		_, err = io.Copy(file, download.Body)
-		check_error(err)
+		check_error(err, "_, err := io.Copy(file, download.Body)")
 		err = file.Close()
-		check_error(err)
+		check_error(err, "err := file.Close()")
 		err = download.Body.Close()
-		check_error(err)
+		check_error(err, "err := download.Body.Close()")
 		fmt.Printf("Downloaded Image: %v \n", id)
 	}
 
@@ -50,7 +50,7 @@ func download_image(url string, id int) {
 
 func parse_html(html string, id int) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
-	check_error(err)
+	check_error(err, "doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))")
 	image_url := doc.Find("meta[property='og:image']").AttrOr("content", "")
 	download_image(image_url, id)
 }
@@ -60,17 +60,17 @@ func main() {
 	for i := 1; i < 1001; i++ {
 		url := fmt.Sprintf("https://safebooru.org/index.php?page=post&s=view&id=%v", i)
 		response, err := http.Get(url)
-		if check_error(err) {
+		if check_error(err, "response, err := http.Get(url)") {
 			continue
 		}
 
 		html, err := io.ReadAll(response.Body)
 		response.Body.Close()
-		if check_error(err) {
+		if check_error(err, "html, err := io.ReadAll(response.Body)") {
 			continue
 		}
 		parse_html(string(html), i)
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 	}
 }
 
