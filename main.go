@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"io"
@@ -12,66 +11,95 @@ import (
 	"time"
 )
 
-func check_error(err error, line string) bool {
-	if err != nil {
-		log.Println(fmt.Sprintf("Error in \"%v\": %v", line, err))
-		return true
-	}
-	return false
-}
-
 // PS Copy pasted from a random website, no clue how this function actually works
-func make_dir() {
-	path := "C:\\Users\\Teto\\Documents\\Safebooru\\images\\"
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		fmt.Println("Creating directory:", path)
-		err := os.MkdirAll(path, os.ModePerm)
-		if err != nil {
-			log.Println("Failed to create directory:", err)
-		}
+func make_dir() error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("Get Home Directory: %w", err)
 	}
+	path := home + "/Documents/Safebooru/images"
+	check_existence, err := os.Stat(path)
+	switch {
+	case os.IsNotExist(err):
+		err = os.MkdirAll(path, 0755)
+		if err != nil {
+			return fmt.Errorf("Create Directory: %w", err)
+		}
+		return nil
+	case check_existence.IsDir():
+		return nil
+
+	case !check_existence.IsDir():
+		return fmt.Errorf("Path is not a directory %w", path)
+
+	default:
+		return fmt.Errorf("Unknown error %w", err)
+	}
+
 }
 
-func download_image(url string, id int) {
+func download_image(url string, id int) error {
 	download, err := http.Get(url)
-	if check_error(err, "download, err := http.Get(url)") != true {
-		file, err := os.Create(fmt.Sprintf("C:\\Users\\Teto\\Documents\\Safebooru\\images\\%v.jpg", id))
-		check_error(err, "file, err := os.Create(fmt.Sprintf(\"C:\\Users\\Teto\\Documents\\Safebooru\\images\\%v.jpg\", id))")
-		_, err = io.Copy(file, download.Body)
-		check_error(err, "_, err := io.Copy(file, download.Body)")
-		err = file.Close()
-		check_error(err, "err := file.Close()")
-		err = download.Body.Close()
-		check_error(err, "err := download.Body.Close()")
-		fmt.Printf("Downloaded Image: %v \n", id)
+	if err != nil {
+		log.Println(err)
+		return fmt.Errorf("Image %w Downloading error", id)
 	}
 
+	file, err := os.Create(fmt.Sprintf("C:\\Users\\Teto\\Documents\\Safebooru\\images\\%v.jpg", id))
+	if err != nil {
+		log.Println(err)
+		return fmt.Errorf("Create File: %w", err)
+	}
+	_, err = io.Copy(file, download.Body)
+	if err != nil {
+		log.Println(err)
+		return fmt.Errorf("Copy File: %w", err)
+	}
+	err = file.Close()
+	if err != nil {
+		log.Println(err)
+		return fmt.Errorf("Close File: %w", err)
+	}
+	err = download.Body.Close()
+	if err != nil {
+		log.Println(err)
+		return fmt.Errorf("Close Body: %w", err)
+	}
+	fmt.Printf("Downloaded Image: %v \n", id)
+	return nil
 }
 
 func parse_html(html string, id int) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
-	check_error(err, "doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))")
+	if err != nil {
+		log.Println(err)
+	}
 	image_url := doc.Find("meta[property='og:image']").AttrOr("content", "")
-	download_image(image_url, id)
+	err = download_image(image_url, id)
+	if err != nil {
+		fmt.Printf("Error Downloading Image %v \n", id)
+	}
 }
 func main() {
 	// Fetch HTML
-	make_dir()
+	err := make_dir()
+	if err != nil {
+		log.Fatal(err)
+	}
 	for i := 1; i < 1001; i++ {
 		url := fmt.Sprintf("https://safebooru.org/index.php?page=post&s=view&id=%v", i)
 		response, err := http.Get(url)
-		if check_error(err, "response, err := http.Get(url)") {
-			continue
+		if err != nil {
+			log.Println(err)
 		}
 
 		html, err := io.ReadAll(response.Body)
 		response.Body.Close()
-		if check_error(err, "html, err := io.ReadAll(response.Body)") {
+		if err != nil {
+			log.Println(err)
 			continue
 		}
 		parse_html(string(html), i)
 		time.Sleep(1000 * time.Millisecond)
 	}
 }
-
-// TODO: Properly handle error
