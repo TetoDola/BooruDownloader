@@ -12,7 +12,6 @@ import (
 	"time"
 )
 
-// PS Copy pasted from a random website, no clue how this function actually works
 func make_dir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
