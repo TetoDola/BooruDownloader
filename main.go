@@ -7,15 +7,16 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
 
 // PS Copy pasted from a random website, no clue how this function actually works
-func make_dir() error {
+func make_dir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("Get Home Directory: %w", err)
+		return "", fmt.Errorf("Get Home Directory: %w", err)
 	}
 	path := home + "/Documents/Safebooru/images"
 	check_existence, err := os.Stat(path)
@@ -23,29 +24,29 @@ func make_dir() error {
 	case os.IsNotExist(err):
 		err = os.MkdirAll(path, 0755)
 		if err != nil {
-			return fmt.Errorf("Create Directory: %w", err)
+			return "", fmt.Errorf("Create Directory: %w", err)
 		}
-		return nil
+		return path, nil
 	case check_existence.IsDir():
-		return nil
+		return path, nil
 
 	case !check_existence.IsDir():
-		return fmt.Errorf("Path is not a directory %w", path)
+		return "", fmt.Errorf("Path is not a directory %w", path)
 
 	default:
-		return fmt.Errorf("Unknown error %w", err)
+		return "", fmt.Errorf("Unknown error %w", err)
 	}
 
 }
 
-func download_image(url string, id int) error {
+func download_image(url string, id int, path string) error {
 	download, err := http.Get(url)
 	if err != nil {
 		log.Println(err)
 		return fmt.Errorf("Image %w Downloading error", id)
 	}
 
-	file, err := os.Create(fmt.Sprintf("C:\\Users\\Teto\\Documents\\Safebooru\\images\\%v.jpg", id))
+	file, err := os.Create(filepath.Join(path, fmt.Sprintf("%v.jpg", id)))
 	if err != nil {
 		log.Println(err)
 		return fmt.Errorf("Create File: %w", err)
@@ -69,24 +70,24 @@ func download_image(url string, id int) error {
 	return nil
 }
 
-func parse_html(html string, id int) {
+func parse_html(html string, id int, path string) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 	if err != nil {
 		log.Println(err)
 	}
 	image_url := doc.Find("meta[property='og:image']").AttrOr("content", "")
-	err = download_image(image_url, id)
+	err = download_image(image_url, id, path)
 	if err != nil {
 		fmt.Printf("Error Downloading Image %v \n", id)
 	}
 }
 func main() {
 	// Fetch HTML
-	err := make_dir()
+	path, err := make_dir()
 	if err != nil {
 		log.Fatal(err)
 	}
-	for i := 1001; i < 1101; i++ {
+	for i := 1101; i < 1106; i++ {
 		url := fmt.Sprintf("https://safebooru.org/index.php?page=post&s=view&id=%v", i)
 		response, err := http.Get(url)
 		if err != nil {
@@ -103,7 +104,7 @@ func main() {
 			log.Println(err)
 		}
 
-		parse_html(string(html), i)
+		parse_html(string(html), i, path)
 		time.Sleep(1000 * time.Millisecond)
 	}
 }
