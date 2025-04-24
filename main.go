@@ -86,7 +86,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for i := 1; i < 1001; i++ {
+	for i := 1001; i < 1101; i++ {
 		url := fmt.Sprintf("https://safebooru.org/index.php?page=post&s=view&id=%v", i)
 		response, err := http.Get(url)
 		if err != nil {
@@ -94,7 +94,7 @@ func main() {
 		}
 
 		html, err := io.ReadAll(response.Body)
-		response.Body.Close()
+		_ = response.Body.Close()
 		if err != nil {
 			log.Println(err)
 			continue
