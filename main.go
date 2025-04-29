@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"io"
@@ -81,12 +82,27 @@ func parse_html(html string, id int, path string) {
 	}
 }
 func main() {
+	var id1 int
+	var id2 int
 	// Fetch HTML
 	path, err := make_dir()
 	if err != nil {
 		log.Fatal(err)
 	}
-	for i := 1101; i < 1106; i++ {
+
+	fmt.Println("Enter the ID you want tor download from; ")
+	_, err = fmt.Scanln(&id1)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Enter the ID you want tor download to; ")
+	_, err = fmt.Scanln(&id2)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i := id1; i < id2+1; i++ {
 		url := fmt.Sprintf("https://safebooru.org/index.php?page=post&s=view&id=%v", i)
 		response, err := http.Get(url)
 		if err != nil {
@@ -95,6 +111,7 @@ func main() {
 
 		html, err := io.ReadAll(response.Body)
 		if err != nil {
+
 			log.Println(err)
 			continue
 		}
